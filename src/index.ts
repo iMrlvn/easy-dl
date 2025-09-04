@@ -1,5 +1,3 @@
-#!/usr/bin/env bun
-#!/usr/bin/env node
 import process from "node:process";
 import downloader from "./lib.js";
 
