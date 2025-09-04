@@ -203,8 +203,12 @@ async function download(
   }
 }
 
+import { version } from "../package.json";
+
+declare const exports: any;
 declare const module: any;
-if (typeof module !== "undefined" && module.exports) {
+if (typeof exports !== "undefined" && typeof module !== "undefined") {
+  exports.version = version;
   module.exports = download;
 }
-export { download as default };
+export { version, download as default };
