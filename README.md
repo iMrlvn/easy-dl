@@ -69,7 +69,7 @@ import { writeFileSync } from "node:fs";
 | `quality`    | `string?`                | `best`    | Quality setting (e.g. `0`, `1080p`, `best`). |
 | `output`     | `string?`                | `undefined` | If provided, saves output to this file. If omitted, returns a `Buffer`. |
 | `ytdlpArgs`  | `string[]?`              | `[]`      | Extra arguments to pass to yt-dlp. [Click here, for more options.](https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options) |
-| `ffmpegArgs` | `string[]?`              | `[]`      | Extra arguments to pass to ffmpeg. [Click here, for more.](https://ffmpeg.org/ffmpeg.html#Options) |
+| `ffmpegArgs` | `string[]?`              | `[]`      | Extra arguments to pass to ffmpeg. [Click here, for more options.](https://ffmpeg.org/ffmpeg.html#Options) |
 
 ## 📜 License
 This project is licensed under the **MIT License**.  
