@@ -203,7 +203,4 @@ async function download(
   }
 }
 
-if (typeof module !== "undefined") {
-  module.exports = download;
-}
 export default download;
