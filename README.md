@@ -34,7 +34,7 @@ import donwload from "easy-dl";
 ## 📚 Examples
 ### Programmatic
 ```ts
-const download = require("easy-dl");
+import download from "easy-dl";
 
 (async() => {
     // Example 1: Video as Buffer
