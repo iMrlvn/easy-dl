@@ -1,11 +1,8 @@
-import { execFile } from "node:child_process";
-import { existsSync, mkdirSync, writeFileSync, unlinkSync, readFileSync, createWriteStream } from "node:fs";
+import { spawn } from "node:child_process";
+import { mkdirSync, createWriteStream, existsSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { promisify } from "node:util";
 import { get } from "node:https";
-
-const execFileAsync = promisify(execFile);
 
 /**
  * Download a file from a given URL and save it locally.
@@ -14,8 +11,8 @@ const execFileAsync = promisify(execFile);
  * @param dest - Local file path to store the binary.
  */
 async function downloadFile(url: string, dest: string): Promise<void> {
+  mkdirSync(join(process.cwd(), "bin"), { recursive: true }); // buat folder bin jika belum ada
   return new Promise((resolve, reject) => {
-    mkdirSync(join(process.cwd(), "bin"), { recursive: true });
     const file = createWriteStream(dest, { mode: 0o755 });
     get(url, response => {
       if (response.statusCode !== 200) {
@@ -27,9 +24,7 @@ async function downloadFile(url: string, dest: string): Promise<void> {
         file.close();
         resolve();
       });
-    }).on("error", err => {
-      reject(err);
-    });
+    }).on("error", err => reject(err));
   });
 }
 
@@ -43,6 +38,9 @@ async function downloadFile(url: string, dest: string): Promise<void> {
  * @returns Absolute path to the binary executable.
  */
 async function ensureBinary(name: "yt-dlp" | "ffmpeg"): Promise<string> {
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  const execFileAsync = promisify(execFile);
   const isWin = process.platform === "win32";
   const exe = isWin ? `${name}.exe` : name;
 
@@ -72,21 +70,15 @@ async function ensureBinary(name: "yt-dlp" | "ffmpeg"): Promise<string> {
       const platform = process.platform;
       let url: string;
 
-      if (platform === "win32") {
-        url =
-          "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/win32-x64.exe";
-      } else if (platform === "darwin") {
-        url =
-          arch === "arm64"
-            ? "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/darwin-arm64"
-            : "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/darwin-x64";
-      } else {
-        // Linux
-        url =
-          arch === "arm64"
-            ? "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/linux-arm64"
-            : "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/linux-x64";
-      }
+      if (platform === "win32") url = "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/win32-x64.exe";
+      else if (platform === "darwin")
+        url = arch === "arm64"
+          ? "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/darwin-arm64"
+          : "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/darwin-x64";
+      else
+        url = arch === "arm64"
+          ? "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/linux-arm64"
+          : "https://github.com/eugeneware/ffmpeg-static/releases/latest/download/linux-x64";
 
       console.log(`Downloading ffmpeg → ${local}`);
       await downloadFile(url, local);
@@ -122,7 +114,6 @@ export interface DownloadOptions {
   /**
    * Quality setting.
    * - `"0"` = best audio
-   * - `"320k"` = high bitrate mp3
    * - `"best"` = best video
    * - `"1080p"`, `"720p"` for specific video quality
    *
@@ -138,10 +129,16 @@ export interface DownloadOptions {
   output?: string;
 
   /**
-   * Optional cookies.
-   * - Path to cookies.txt file, or raw cookie string.
+   * Extra arguments for yt-dlp
+   * See here: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options
    */
-  cookies?: string;
+  ytdlpArgs?: string[];
+
+  /**
+   * Extra arguments for ffmpeg
+   * See here: https://ffmpeg.org/ffmpeg.html#Options
+   */
+  ffmpegArgs?: string[];
 }
 
 /**
@@ -154,10 +151,9 @@ export interface DownloadOptions {
  * @param options - Download options
  * @returns Buffer if no output is provided, otherwise void
  */
-async function download(
-  url: string,
-  options: DownloadOptions = {}
-): Promise<Buffer | void> {
+export async function download(url: string, options: DownloadOptions = {}): Promise<Buffer | void> {
+  if (!url) throw new Error("No URL provided for download");
+
   const mode = options.mode ?? "audio";
   const format = options.format ?? (mode === "audio" ? "mp3" : "mp4");
   const quality = options.quality ?? (mode === "audio" ? "0" : "best");
@@ -165,50 +161,53 @@ async function download(
   const ytDlp = await ensureBinary("yt-dlp");
   const ffmpeg = await ensureBinary("ffmpeg");
 
-  const args: string[] = [];
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    const isBufferMode = !options.output;
+    const outputPath = isBufferMode ? "-" : options.output!;
 
-  // Mode setup
-  if (mode === "audio") {
-    args.push("-x", "--audio-format", format, "--audio-quality", quality);
-  } else {
-    args.push("-f", quality, "--merge-output-format", format);
-  }
+    const ytdlpArgs: string[] = [];
 
-  // Cookies
-  if (options.cookies) {
-    if (existsSync(options.cookies)) {
-      args.push("--cookies", options.cookies);
-    } else {
-      const tempFile = join(tmpdir(), `easy-dl-cookies-${Date.now()}.txt`);
-      writeFileSync(tempFile, options.cookies, "utf8");
-      args.push("--cookies", tempFile);
-    }
-  }
+    // Mode setup
+    if (mode === "audio") ytdlpArgs.push("-f", quality);
+    else ytdlpArgs.push("-f", quality, "--merge-output-format", format);
 
-  // Output
-  const output = options.output ?? join(tmpdir(), `easy-dl-%(id)s.%(ext)s`);
-  args.push("--quiet", "--no-warnings", "--ffmpeg-location", ffmpeg, "-o", output, url);
+    ytdlpArgs.push("--quiet", "--no-warnings");
+    ytdlpArgs.push("-o", outputPath, url);
 
-  // Execute yt-dlp
-  await execFileAsync(ytDlp, args);
+    // Append extra yt-dlp args
+    if (options.ytdlpArgs?.length) ytdlpArgs.push(...options.ytdlpArgs);
 
-  // If returning Buffer
-  if (!options.output) {
-    const files = require("glob").sync(join(tmpdir(), "easy-dl-*"));
-    if (!files.length) throw new Error("No output file produced");
-    const filePath = files[0];
-    const data = readFileSync(filePath);
-    unlinkSync(filePath);
-    return data;
-  }
+    const ytdlpProc = spawn(ytDlp, ytdlpArgs);
+
+    const ffmpegArgs: string[] = [];
+    if (mode === "audio") ffmpegArgs.push("-i", "pipe:0", "-vn", "-f", format, "pipe:1");
+    else ffmpegArgs.push("-i", "pipe:0", "-c", "copy", "-f", format, "pipe:1");
+
+    // Append extra ffmpeg args
+    if (options.ffmpegArgs?.length) ffmpegArgs.push(...options.ffmpegArgs);
+
+    const ffmpegProc = spawn(ffmpeg, ffmpegArgs);
+
+    // Pipe yt-dlp stdout to ffmpeg stdin
+    ytdlpProc.stdout.pipe(ffmpegProc.stdin);
+
+    // Collect output chunks if Buffer mode
+    if (isBufferMode) ffmpegProc.stdout.on("data", chunk => chunks.push(chunk));
+
+    // Log yt-dlp errors
+    ytdlpProc.stderr.on("data", chunk => console.error("⚠️ [yt-dlp]", chunk.toString()));
+
+    ffmpegProc.on("close", code => {
+      if (code !== 0) return reject(new Error(`ffmpeg exited with code ${code}`));
+      if (isBufferMode) resolve(Buffer.concat(chunks));
+      else resolve(); // file already written
+    });
+
+    ytdlpProc.on("close", code => {
+      if (code !== 0) console.error("⚠️ [yt-dlp] exited with code", code);
+    });
+  });
 }
 
-import { version } from "../package.json";
-
-declare const exports: any;
-declare const module: any;
-if (typeof exports !== "undefined" && typeof module !== "undefined") {
-  exports.version = version;
-  module.exports = download;
-}
-export { version, download as default };
+export { download as default, download };

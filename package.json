@@ -1,6 +1,6 @@
 {
   "name": "@mrlvn/easy-dl",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A simple downloader wrapper for yt-dlp and ffmpeg, with Node.js and Bun support.",
   "main": "./dist/lib.js",
   "module": "./dist/lib.mjs",
