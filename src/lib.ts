@@ -98,7 +98,7 @@ async function ensureBinary(name: "yt-dlp" | "ffmpeg"): Promise<string> {
 }
 
 /**
- * Options for downloader function.
+ * Options for download function.
  */
 export interface DownloadOptions {
   /**
@@ -154,7 +154,7 @@ export interface DownloadOptions {
  * @param options - Download options
  * @returns Buffer if no output is provided, otherwise void
  */
-export default async function downloader(
+async function download(
   url: string,
   options: DownloadOptions = {}
 ): Promise<Buffer | void> {
@@ -187,7 +187,7 @@ export default async function downloader(
 
   // Output
   const output = options.output ?? join(tmpdir(), `easy-dl-%(id)s.%(ext)s`);
-  args.push("-o", output, url, "--ffmpeg-location", ffmpeg);
+  args.push("--quiet", "--no-warnings", "-o", output, url, "--ffmpeg-location", ffmpeg);
 
   // Execute yt-dlp
   await execFileAsync(ytDlp, args);
@@ -202,3 +202,6 @@ export default async function downloader(
     return data;
   }
 }
+
+export default download;
+module.exports = download;

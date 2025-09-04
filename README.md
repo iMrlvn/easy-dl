@@ -1,40 +1,41 @@
 # easy-dl
 
-A simple and flexible downloader for audio and video using **yt-dlp** and **ffmpeg**.  
-Supports both **Node.js** and **Bun**, with programmatic API and CLI interface.
+[![npm version](https://img.shields.io/npm/v/@mrlvn/easy-dl)](https://www.npmjs.com/package/@mrlvn/easy-dl) [![npm downloads](https://img.shields.io/npm/dm/@mrlvn/easy-dl)](https://www.npmjs.com/package/@mrlvn/easy-dl)
+
+A simple and flexible library downloader for audio and video using **yt-dlp** and **ffmpeg**.  
+Supports both **Node.js** and **Bun**.
 
 ## 📦 Installation
 Using NPM
 ```bash
-npm install easy-dl
+npm install @mrlvn/easy-dl
 ```
 Using BUN
 ```bash
-bun add easy-dl
+bun add @mrlvn/easy-dl
 ```
 Using YARN
 ```bash
-yarn add easy-dl
+yarn add @mrlvn/easy-dl
 ```
 Using PNPM
 ```bash
-pnpm add easy-dl
+pnpm add @mrlvn/easy-dl
 ```
 
 ## 🚀 Usage
 CommonJS
 ```js
-const download = require("easy-dl");
+const download = require("@mrlvn/easy-dl");
 ```
 ESModule or TypeScript
 ```ts
-import donwload from "easy-dl";
+import download from "@mrlvn/easy-dl";
 ```
 
 ## 📚 Examples
-### Programmatic
 ```ts
-import download from "easy-dl";
+import download from "@mrlvn/easy-dl";
 
 (async() => {
     // Example 1: Video as Buffer
@@ -55,20 +56,7 @@ import download from "easy-dl";
 })();
 ```
 
-### CLI
-```bash
-# Audio as file
-easy-dl "https://youtu.be/dQw4w9WgXcQ" --mode audio --format mp3 --output song.mp3
-
-# Video as file
-easy-dl "https://youtu.be/dQw4w9WgXcQ" --mode video --format mp4 --quality best --output video.mp4
-
-# With cookies
-easy-dl "https://youtu.be/dQw4w9WgXcQ" --mode video --cookies ./cookies.txt --output private.mp4
-```
-
-## ⚙️ Options
-### Programmatic Options (`DownloadOptions`)
+## ⚙️ Options (`DownloadOptions`)
 | Option     | Type                     | Default   | Description |
 |------------|--------------------------|-----------|-------------|
 | `mode`     | `"audio"` \| `"video"`   | `"audio"` | Choose whether to download audio or video. |
@@ -76,15 +64,6 @@ easy-dl "https://youtu.be/dQw4w9WgXcQ" --mode video --cookies ./cookies.txt --ou
 | `quality`  | `string?`                | `best`    | Quality setting (e.g. `320k`, `1080p`, `best`). |
 | `output`   | `string?`                | `undefined` | If provided, saves output to this file. If omitted, returns a `Buffer`. |
 | `cookies`  | `string?`                | `undefined` | Path to cookies file (Netscape/Chrome format) for authenticated downloads. |
-
-### CLI Flags
-| Flag        | Description |
-|-------------|-------------|
-| `--mode`    | `"audio"` or `"video"`. Default: `"audio"`. |
-| `--format`  | Output format (`mp3`, `mp4`, `flac`, etc). |
-| `--quality` | Quality setting (e.g. `320k`, `1080p`, `best`). |
-| `--output`  | Path to output file. If omitted, returns a Buffer (printed as raw binary to stdout). |
-| `--cookies` | Path to cookies.txt file for yt-dlp authentication. |
 
 ## 📜 License
 This project is licensed under the **MIT License**.  
