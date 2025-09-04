@@ -203,4 +203,8 @@ async function download(
   }
 }
 
-export default download;
+declare const module: any;
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = download;
+}
+export { download as default };
