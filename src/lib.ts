@@ -187,7 +187,7 @@ async function download(
 
   // Output
   const output = options.output ?? join(tmpdir(), `easy-dl-%(id)s.%(ext)s`);
-  args.push("--quiet", "--no-warnings", "-o", output, url, "--ffmpeg-location", ffmpeg);
+  args.push("--quiet", "--no-warnings", "--ffmpeg-location", ffmpeg, "-o", output, url);
 
   // Execute yt-dlp
   await execFileAsync(ytDlp, args);
@@ -204,4 +204,3 @@ async function download(
 }
 
 export default download;
-module.exports = download;
