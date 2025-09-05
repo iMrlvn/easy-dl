@@ -130,13 +130,13 @@ export interface DownloadOptions {
 
   /**
    * Extra arguments for yt-dlp
-   * See here: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options
+   * See more: https://github.com/yt-dlp/yt-dlp?tab=readme-ov-file#usage-and-options
    */
   ytdlpArgs?: string[];
 
   /**
    * Extra arguments for ffmpeg
-   * See here: https://ffmpeg.org/ffmpeg.html#Options
+   * See more: https://ffmpeg.org/ffmpeg.html#Options
    */
   ffmpegArgs?: string[];
 }
@@ -151,7 +151,7 @@ export interface DownloadOptions {
  * @param options - Download options
  * @returns Buffer if no output is provided, otherwise void
  */
-export async function download(url: string, options: DownloadOptions = {}): Promise<Buffer | void> {
+async function download(url: string, options: DownloadOptions = {}): Promise<Buffer | void> {
   if (!url) throw new Error("No URL provided for download");
 
   const mode = options.mode ?? "audio";
